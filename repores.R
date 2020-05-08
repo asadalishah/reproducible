@@ -34,13 +34,24 @@ df %>%
 
 time.series <- df %>% 
         group_by(date) %>% 
-        summarize(Average = mean(steps))
+        summarize(Average = mean(steps),
+                  Med = median(steps))
 
 library(lubridate)
-ggplot(time.series, aes(x=ymd(date), y=Average)) +
+#avg
+avg <- ggplot(time.series, aes(x=ymd(date), y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Time Series", "Average Number of Steps Taken Per Day") +
     labs(x = "Date", y = "Average Number of Steps")
+
+#median
+med <- ggplot(time.series, aes(x=ymd(date), y=Med)) +
+    geom_line(color = "skyblue2", size = 1, na.rm = T) +
+    ggtitle("Time Series", "Meidan Number of Steps Taken Per Day") +
+    labs(x = "Date", y = "Median Number of Steps")
+
+ggsave(arrangeGrob(avg, med))
+
 
 # max steps by interval
 intrvl <- df %>% 
@@ -94,3 +105,16 @@ ggplot(steps.by.weekday, aes(x=interval, y=Average)) +
             "Average Number of Steps Taken by Time Interval") +
     labs(x = "Interval", y = "Average Number of Steps") +
     facet_grid(.~weekend)
+
+w_day <- df_imputed %>%
+    mutate(dow = weekdays(as.Date(date))) %>% 
+    group_by(dow) %>% 
+    summarize(Average = mean(steps))
+
+ggplot(w_day, aes(x = dow, y = Average)) +
+    geom_bar() +
+    ggtitle("Steps by Weekdays", 
+            "Average Number of Steps Taken by Weekdays") +
+    labs(x = "Weekdays", y = "Average Number of Steps")
+
+

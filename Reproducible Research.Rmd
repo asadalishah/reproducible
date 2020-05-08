@@ -12,8 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Reproducible Research Assignment
 
-Given below are the steps taken to conduct the data analysis.
+Given below are the steps taken to conduct the data analysis. Following package would be required so lets make them available from the beginning.
 
+```{r packages, echo=TRUE}
+library(dplyr)
+library(ggplot2)
+library(mice)
+library(lubridate)
+library(gridExtra)
+```
 
 ## Downloading and reading the data
 
@@ -31,8 +38,6 @@ head(df)
 Tranforming the date to be make it ready for the plot.
 
 ```{r hist data, echo=TRUE}
-library(dplyr)
-library(ggplot2)
 steps.by.day <- df %>% 
         group_by(date) %>% 
         summarize(steps = sum(steps), na.rm = T)
@@ -71,16 +76,16 @@ First we create a summarized dataframe *time.series* to ready the data for the t
 ```{r t-series, avg steps, echo=TRUE}
 time.series <- df %>% 
         group_by(date) %>% 
-        summarize(Average = mean(steps))
+        summarize(Average = mean(steps),
+                  Median = median(steps))
  
 head(time.series)
 
 ```
 
-Using the *time.series* dataframe, here we create the time series plot for the avearge number of steps take per days. Note that to run this plot, you will need to make *lubradiate* package available which is used for date transformation.
+Using the *time.series* dataframe, here we create the time series plot for the avearge number of steps taken per day. Note that to run this plot, you will need to make *lubradiate* package available which is used for date transformation.
 
-```{r time-series plot, echo=TRUE}
-library(lubridate)
+```{r time-series mean plot, echo=TRUE}
 ggplot(time.series, aes(x=ymd(date), y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Time Series", "Average Number of Steps Taken Per Day") +
@@ -88,6 +93,31 @@ ggplot(time.series, aes(x=ymd(date), y=Average)) +
 ```
 
 Also note the discontinuations or breaks in the line which are caused by the missing data.
+
+Using the same dataframe, here we create the time series plot for the median number of steps take per day which interestly shows that median number of steps in all intervals is zero.
+
+```{r time-series median plot, echo=TRUE}
+ggplot(time.series, aes(x=ymd(date), y=Median)) +
+    geom_line(color = "skyblue2", size = 1, na.rm = T) +
+    ggtitle("Time Series", "Meidan Number of Steps Taken Per Day") +
+    labs(x = "Date", y = "Median Number of Steps")
+```
+
+I always wanted to find a way to combine two ggplot charts objetcs in a single frame. Apparently, this is not possible in *ggplot2* system however there is a package for that. That is *gridExtra*.
+
+```{r two plots, echo=TRUE}
+plot1 <- ggplot(time.series, aes(x=ymd(date), y=Average)) +
+    geom_line(color = "skyblue2", size = 1, na.rm = T) +
+    ggtitle("Time Series", "Average Number of Steps Taken Per Day") +
+    labs(x = "Date", y = "Average Number of Steps")
+
+plot2 <- ggplot(time.series, aes(x=ymd(date), y=Median)) +
+    geom_line(color = "skyblue2", size = 1, na.rm = T) +
+    ggtitle("Time Series", "Meidan Number of Steps Taken Per Day") +
+    labs(x = "Date", y = "Median Number of Steps")
+
+grid.arrange(plot1, plot2, ncol = 2)
+```
 
 
 ## Maximum steps
@@ -128,7 +158,6 @@ This section is entirely based on the following very helpful resource [1]. It de
 First, on strategy. With this small bit of code, we understnad the dimensions of the problem i.e., where are the missing values.
 
 ```{r missingvals, echo=TRUE}
-library(mice)
 md.pattern(df) # finding the number of missing values
 ```
 
@@ -151,12 +180,9 @@ str(df_imputed)
 This is essentially are repeat of the previous step with minor changes in the code.
 
 ```{r imputeddata, echo=TRUE}
-library(dplyr)
-library(ggplot2)
-
 steps.by.day2 <- df_imputed %>% 
     group_by(date) %>% 
-    summarize(steps = sum(steps), na.rm = T)
+    summarize(steps = mean(steps), na.rm = T)
 ```
 
 Using that data, we create the following histogram wihtout any missing values. This also shows us that the `pmm` method mostly predicted zeros, hence the first bar is significantly taller than the one seen in the histogram of the non-imputed data.
@@ -174,7 +200,6 @@ ggplot(steps.by.day2, aes(steps)) +
 First, again the data transformation.
 
 ```{r weekday vs. weekend, echo=TRUE}
-library(lubridate)
 steps.by.weekday <- df_imputed %>%
     mutate(day.of.week = weekdays(as.Date(date))) %>% 
     mutate(weekend = ifelse(day.of.week %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>% 
@@ -184,13 +209,30 @@ steps.by.weekday <- df_imputed %>%
 
 And then the panel plot showing the average number of steps during weekdays and weekends.
 
-```{r lastplot, echo=TRUE}
+```{r steps by weekday plots, echo=TRUE}
 ggplot(steps.by.weekday, aes(x=interval, y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Interval Plot by Weekdays vs. Weekend", 
             "Average Number of Steps Taken by Time Interval") +
     labs(x = "Interval", y = "Average Number of Steps") +
     facet_grid(.~weekend)
+```
+
+Another way to find out the difference in average number of steps taken during weekdays and weekends is as follows:
+
+```{r lastplot, echo=TRUE}
+dayofweek <- df_imputed %>%
+    mutate(dow = weekdays(as.Date(date))) %>% 
+    group_by(dow) %>% 
+    summarize(Average = mean(steps))
+
+ggplot(dayofweek, aes(x = as.factor(dow), y = Average)) +
+    geom_bar(
+        fill = "skyblue2", stat = "identity",
+        position="dodge", width = 0.5) +
+    ggtitle("Steps by Weekdays", 
+            "Average Number of Steps Taken by Weekdays") +
+    labs(x = "Weekdays", y = "Average Number of Steps")
 ```
 
 This was a very interesting exercise and I learned the value of not saving the intermediary objects during the analysis.
