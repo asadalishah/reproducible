@@ -106,13 +106,15 @@ ggplot(steps.by.weekday, aes(x=interval, y=Average)) +
     labs(x = "Interval", y = "Average Number of Steps") +
     facet_grid(.~weekend)
 
-w_day <- df_imputed %>%
+dayofweek <- df_imputed %>%
     mutate(dow = weekdays(as.Date(date))) %>% 
     group_by(dow) %>% 
     summarize(Average = mean(steps))
 
-ggplot(w_day, aes(x = dow, y = Average)) +
-    geom_bar() +
+ggplot(dayofweek, aes(x = as.factor(dow), y = Average)) +
+    geom_bar(
+        fill = "skyblue2", stat = "identity",
+        position="dodge", width = 0.5) +
     ggtitle("Steps by Weekdays", 
             "Average Number of Steps Taken by Weekdays") +
     labs(x = "Weekdays", y = "Average Number of Steps")

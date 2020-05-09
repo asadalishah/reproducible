@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Given below are the steps taken to conduct the data analysis. Following package would be required so lets make them available from the beginning.
 
-```{r packages, echo=TRUE}
+```{r packages}
 library(dplyr)
 library(ggplot2)
 library(mice)
@@ -24,7 +24,7 @@ library(gridExtra)
 
 ## Downloading and reading the data
 
-```{r readdata, echo=TRUE}
+```{r readdata}
 loc <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(loc, destfile = "repores")
 unzip("repores")
@@ -37,15 +37,15 @@ head(df)
 
 Tranforming the date to be make it ready for the plot.
 
-```{r hist data, echo=TRUE}
+```{r hist data}
 steps.by.day <- df %>% 
         group_by(date) %>% 
         summarize(steps = sum(steps), na.rm = T)
 ```
 
-Now, the condensed dataframe *steps.by.day* is ready to be used for plot creations.
+Now, the condensed dataframe **steps.by.day** is ready to be used for plot creations.
 
-```{r histogram, echo=TRUE}
+```{r histogram}
 ggplot(steps.by.day, aes(steps)) +
     geom_histogram(fill = "skyblue2") +
     ggtitle("Histogram", "Number of Steps Taken Per Day") +
@@ -55,9 +55,9 @@ ggplot(steps.by.day, aes(steps)) +
 
 ## Mean and median of steps per days
 
-The following codes creates the dataframe *central* that contians the mean and meidan number of steps taken each day. Using `head()`, we inspect to top 5 rows of this dataframe.
+The following codes creates the dataframe **central** that contians the mean and meidan number of steps taken each day. Using `head()`, we inspect to top 5 rows of this dataframe.
 
-```{r mean-meidan, echo=TRUE}
+```{r mean-meidan}
 central <- df %>% 
         group_by(date) %>% 
         summarize(Total = sum(steps),
@@ -71,9 +71,9 @@ head(central)
 
 ## Time series plot of the average number of steps taken
 
-First we create a summarized dataframe *time.series* to ready the data for the timeseries plot.
+First we create a summarized dataframe **time.series** to ready the data for the timeseries plot.
 
-```{r t-series, avg steps, echo=TRUE}
+```{r t-series avg steps}
 time.series <- df %>% 
         group_by(date) %>% 
         summarize(Average = mean(steps),
@@ -83,9 +83,9 @@ head(time.series)
 
 ```
 
-Using the *time.series* dataframe, here we create the time series plot for the avearge number of steps taken per day. Note that to run this plot, you will need to make *lubradiate* package available which is used for date transformation.
+Using the **time.series** dataframe, here we create the time series plot for the avearge number of steps taken per day. Note that to run this plot, you will need to make **lubradiate** package available which is used for date transformation.
 
-```{r time-series mean plot, echo=TRUE}
+```{r time-series mean plot}
 ggplot(time.series, aes(x=ymd(date), y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Time Series", "Average Number of Steps Taken Per Day") +
@@ -96,16 +96,16 @@ Also note the discontinuations or breaks in the line which are caused by the mis
 
 Using the same dataframe, here we create the time series plot for the median number of steps take per day which interestly shows that median number of steps in all intervals is zero.
 
-```{r time-series median plot, echo=TRUE}
+```{r time-series median plot}
 ggplot(time.series, aes(x=ymd(date), y=Median)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Time Series", "Meidan Number of Steps Taken Per Day") +
     labs(x = "Date", y = "Median Number of Steps")
 ```
 
-I always wanted to find a way to combine two ggplot charts objetcs in a single frame. Apparently, this is not possible in *ggplot2* system however there is a package for that. That is *gridExtra*.
+I always wanted to find a way to combine two ggplot charts objetcs in a single frame. Apparently, this is not possible in **ggplot2** system however there is a package for that. That is **gridExtra**.
 
-```{r two plots, echo=TRUE}
+```{r two plots}
 plot1 <- ggplot(time.series, aes(x=ymd(date), y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Time Series", "Average Number of Steps Taken Per Day") +
@@ -124,7 +124,7 @@ grid.arrange(plot1, plot2, ncol = 2)
 
 First a bit of data transformation.
 
-```{r max steps, echo=TRUE}
+```{r max steps}
 # max steps by interval
 intrvl <- df %>% 
         group_by(interval) %>% 
@@ -133,14 +133,14 @@ intrvl <- df %>%
 
 We also need to find out which interval has the maximum number of steps.
 
-```{r whichmax, echo=TRUE}
+```{r whichmax}
 which.max(intrvl$Average)
 intrvl[104,]
 ```
 
 Here goes the plot where we use the above information for annotations purposes.
 
-```{r maxstepplot, echo=TRUE}
+```{r maxstepplot}
 ggplot(intrvl, aes(x=interval, y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Interval Plot", "Average Number of Steps Taken by Time Interval") +
@@ -153,23 +153,23 @@ ggplot(intrvl, aes(x=interval, y=Average)) +
 
 # Missing value strategy
 
-This section is entirely based on the following very helpful resource [1]. It describes several methods and the corresponding packages for the application of those packages.
+This section is entirely based on the following very helpful [resource] [1]. It describes several methods and the corresponding packages for the application of those packages.
 
 First, on strategy. With this small bit of code, we understnad the dimensions of the problem i.e., where are the missing values.
 
-```{r missingvals, echo=TRUE}
+```{r missingvals}
 md.pattern(df) # finding the number of missing values
 ```
 
-It identifies that there are 2304 missing values all of which are in the `steps` variable. Given that it is a numeric variable, the best suited technique is *Predictive Mean Matching*. Different options are generated here using this method defined with the `pmm` argument. This is a computationally taxing job, hence the results are cached.
+It identifies that there are 2304 missing values all of which are in the `steps` variable. Given that it is a numeric variable, the best suited technique is **Predictive Mean Matching**. Different options are generated here using this method defined with the `pmm` argument. This is a computationally taxing job, hence the results are cached.
 
-```{r ppm imputing, echo=FALSE, cache=TRUE}
+```{r ppm, cache=TRUE}
 imputations <- mice(df, m=5, maxit = 50, method = 'pmm', seed = 500)
 ```
 
 `imputations` contains 5 different datasets that contain no missing values. From those options, we pick the second options using `complete()` and inspect it using `str()`. Note that all these options are theoratically equal and one can pick any.
 
-```{r select and inspect, echo=TRUE}
+```{r select and inspect}
 df_imputed <- complete(imputations, 2) # picking one dataset of out of five
 str(df_imputed)
 ```
@@ -179,7 +179,7 @@ str(df_imputed)
 
 This is essentially are repeat of the previous step with minor changes in the code.
 
-```{r imputeddata, echo=TRUE}
+```{r imputeddata}
 steps.by.day2 <- df_imputed %>% 
     group_by(date) %>% 
     summarize(steps = mean(steps), na.rm = T)
@@ -187,7 +187,7 @@ steps.by.day2 <- df_imputed %>%
 
 Using that data, we create the following histogram wihtout any missing values. This also shows us that the `pmm` method mostly predicted zeros, hence the first bar is significantly taller than the one seen in the histogram of the non-imputed data.
 
-```{r imputedplot, echo=TRUE}
+```{r imputedplot}
 ggplot(steps.by.day2, aes(steps)) +
     geom_histogram(fill = "skyblue2") +
     ggtitle("Histogram with No Missing Values", "Number of Steps Taken Per Day") +
@@ -199,7 +199,7 @@ ggplot(steps.by.day2, aes(steps)) +
 
 First, again the data transformation.
 
-```{r weekday vs. weekend, echo=TRUE}
+```{r weekday vs. weekend}
 steps.by.weekday <- df_imputed %>%
     mutate(day.of.week = weekdays(as.Date(date))) %>% 
     mutate(weekend = ifelse(day.of.week %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>% 
@@ -209,7 +209,7 @@ steps.by.weekday <- df_imputed %>%
 
 And then the panel plot showing the average number of steps during weekdays and weekends.
 
-```{r steps by weekday plots, echo=TRUE}
+```{r steps by weekday plots}
 ggplot(steps.by.weekday, aes(x=interval, y=Average)) +
     geom_line(color = "skyblue2", size = 1, na.rm = T) +
     ggtitle("Interval Plot by Weekdays vs. Weekend", 
@@ -220,7 +220,7 @@ ggplot(steps.by.weekday, aes(x=interval, y=Average)) +
 
 Another way to find out the difference in average number of steps taken during weekdays and weekends is as follows:
 
-```{r lastplot, echo=TRUE}
+```{r lastplot}
 dayofweek <- df_imputed %>%
     mutate(dow = weekdays(as.Date(date))) %>% 
     group_by(dow) %>% 
